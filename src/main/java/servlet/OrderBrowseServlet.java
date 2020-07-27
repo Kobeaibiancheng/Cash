@@ -57,7 +57,6 @@ public class OrderBrowseServlet extends HttpServlet {
 
          /*   //将后端的数据  转换为json字符串
             ObjectMapper objectMapper = new ObjectMapper();
-
             //将list转换为json字符串，并将该字符串写到流当中
             objectMapper.writeValue(writer,orders);
             //推到前端
