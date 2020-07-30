@@ -1,5 +1,7 @@
 package servlet;
 
+import entity.Account;
+import service.AccountService;
 import util.DBUtil;
 
 import javax.servlet.ServletException;
@@ -28,46 +30,24 @@ public class RegisterServlet extends HttpServlet {
         String username = req.getParameter("username");
         String password = req.getParameter("password");
 
-        Connection connection = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
+        AccountService accountService = new AccountService();
 
+        Account accountRegister = new Account();
+        accountRegister.setUsername(username);
+        accountRegister.setPassword(password);
+
+        Writer writer = resp.getWriter();
         try {
-            String sql = "insert into account(username,password) values(?,?)";
-            connection = DBUtil.getConnection(true);
-            ps = connection.prepareStatement(sql);
-
-            ps.setString(1,username);//下标从1开始  对第一个 ? 赋值
-            ps.setString(2,password);//             对第二个 ? 赋值
-
-            Writer writer = resp.getWriter();//响应体流    可以往前端页面写东西
-
-            /**
-             * 缺少查询用户名是否重复
-             */
-
-            int ret = ps.executeUpdate();//返回0表示  插入失败
-            if (ret == 0) {
+            int ret = accountService.register(accountRegister);
+            if (ret != 0) {
+                resp.sendRedirect("login.html");
+            }else{
                 System.out.println("注册失败");
-                //writer.write("<h2>注册失败</h2>");
-                resp.sendRedirect("register.html");//响应体流    sendRedirect可以跳转到其他页面
-
-            }else {
-                System.out.println("注册成功");
-                //writer.write("<h2>注册成功</h2>");
-                resp.sendRedirect("login.html");//响应体流    sendRedirect可以跳转到其他页面
+                writer.write("<h2> 注册失败 </h2>");
+                resp.sendRedirect("register.html");
             }
-
-
-
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                DBUtil.close(connection,ps,rs);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
 
     }
