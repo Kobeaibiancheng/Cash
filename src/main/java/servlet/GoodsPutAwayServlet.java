@@ -1,5 +1,7 @@
 package servlet;
 
+import entity.Goods;
+import service.AccountService;
 import util.DBUtil;
 
 import javax.servlet.ServletException;
@@ -35,7 +37,31 @@ public class GoodsPutAwayServlet extends HttpServlet {
 
         String discount = req.getParameter("discount");
 
-        Connection connection = null;
+        Goods addGoods = new Goods();
+        addGoods.setName(name);
+        addGoods.setStock(Integer.valueOf(stock));
+        addGoods.setUnit(unit);
+        addGoods.setPrice(realPrice);
+        addGoods.setDiscount(Integer.valueOf(discount));
+        addGoods.setIntroduce(introduce);
+        //后端打印添加商品信息
+        System.out.println(addGoods);
+
+        Writer writer = resp.getWriter();
+        AccountService accountService = new AccountService();
+        try {
+            int ret = accountService.goodsPutAway(addGoods);
+            if (ret != 0) {
+                writer.write("<h2> 商品上架成功 </h2>");
+                resp.sendRedirect("index.html");
+            }else {
+                writer.write("<h2> 商品上架失败 </h2>");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        /*Connection connection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
 
@@ -71,6 +97,6 @@ public class GoodsPutAwayServlet extends HttpServlet {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-        }
+        }*/
     }
 }
