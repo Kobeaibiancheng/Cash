@@ -2,6 +2,7 @@ package servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import entity.Goods;
+import service.AccountService;
 import util.DBUtil;
 
 import javax.servlet.ServletException;
@@ -30,9 +31,27 @@ public class GoodsBrowseServlet extends HttpServlet {
         /**
          * 前端未给我后端传来任何信息
          */
+        List<Goods> goodsList = new ArrayList<Goods>();
+        AccountService accountService = new AccountService();
+        try {
+            goodsList = accountService.goodsBrowse();
+            //后端可以看到
+            System.out.println("商品列表");
+            System.out.println(goodsList);
+            //将后端的数据转换为 jackson 字符串
+            ObjectMapper objectMapper = new ObjectMapper();
 
+            Writer writer = resp.getWriter();
 
-        Connection connection =null;
+            //将list转换为json字符串，并将字符串写到流中
+            objectMapper.writeValue(writer,goodsList);
+            //推到前端
+            writer.write(writer.toString());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        /*Connection connection =null;
         PreparedStatement ps = null;
         ResultSet rs = null;
 
@@ -79,7 +98,7 @@ public class GoodsBrowseServlet extends HttpServlet {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-        }
+        }*/
 
 
     }
