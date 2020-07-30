@@ -45,8 +45,10 @@ public class AccountDao {
                 account.setId(id);
                 account.setUsername(rs.getString("username"));
                 account.setPassword(rs.getString("password"));
+                return account;
+            }else {
+                return null;
             }
-            return account;
         }finally {
             DBUtil.close(connection,ps,rs);
         }
@@ -347,19 +349,24 @@ public class AccountDao {
     }
 
     public static void main(String[] args) throws SQLException {
+        AccountDao accountDao = new AccountDao();
+        Account account = new Account();
+        account.setUsername("wyx");
+        account.setPassword("1");
+        System.out.println(accountDao.login(account));
         /*Account account = new Account();
         account.setUsername("kobe");
         account.setPassword("123");
         System.out.println(register(account));
         System.out.println(goodsBrowse());*/
-        Goods goods = new Goods();
+        /*Goods goods = new Goods();
         goods.setId(14);
         goods.setName("kd13");
         goods.setIntroduce("全掌zoom气垫,前掌双层zoom");
         goods.setStock(100);
         goods.setUnit("双");
         goods.setPrice(1399);
-        goods.setDiscount(99);
+        goods.setDiscount(99);*/
         //System.out.println(goodsPutAway(goods));
         //System.out.println(goodsSoldOut(13));
         //System.out.println(goodsUpdate(goods));
