@@ -43,9 +43,42 @@ public class AccountService {
         return listGoods;
     }
 
+    /**
+     * 添加商品
+     * @param addGoods
+     * @return
+     * @throws SQLException
+     */
     public int goodsPutAway(Goods addGoods) throws SQLException {
         AccountDao accountDao = new AccountDao();
         int ret = accountDao.goodsPutAway(addGoods);
         return ret;
     }
+
+    /**
+     * 下架商品
+     * @param id
+     * @return
+     * @throws SQLException
+     */
+    public int goodsSoldOut(int id) throws SQLException {
+        AccountDao accountDao = new AccountDao();
+        int ret = accountDao.goodsSoldOut(id);
+        return ret;
+    }
+
+
+    /**
+     * 更新商品信息
+     * @param updateGoods
+     * @return
+     * @throws SQLException
+     */
+    public int goodsUpdate(Goods updateGoods) throws SQLException {
+        AccountDao accountDao = new AccountDao();
+        int ret = accountDao.goodsUpdate(updateGoods);
+        return ret;
+    }
+
+
 }
