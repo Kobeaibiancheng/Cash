@@ -1,6 +1,7 @@
 package servlet;
 
 import entity.Goods;
+import service.AccountService;
 import util.DBUtil;
 
 import javax.servlet.ServletException;
@@ -37,10 +38,34 @@ public class GoodsUpdateServlet extends HttpServlet {
         double doublePrice = Double.valueOf(price);
         int realPrice = new Double(100*doublePrice).intValue();
 
-        Writer writer = resp.getWriter();
+        Goods updateGoods = new Goods();
+        updateGoods.setId(goodsID);
+        updateGoods.setName(name);
+        updateGoods.setIntroduce(introduce);
+        updateGoods.setStock(Integer.valueOf(stock));
+        updateGoods.setUnit(unit);
+        updateGoods.setPrice(realPrice);
+        updateGoods.setDiscount(Integer.valueOf(discount));
+
+       Writer writer = resp.getWriter();
+
+       AccountService accountService = new AccountService();
+       try {
+           int ret = accountService.goodsUpdate(updateGoods);
+           if (ret != 0) {
+               System.out.println("更新成功 " + updateGoods);
+               resp.sendRedirect("goodsbrowse.html");
+           }else {
+               System.out.println("更新失败 " + updateGoods);
+           }
+       } catch (SQLException e) {
+           e.printStackTrace();
+       }
 
 
-        //1.看是否存在   goodsID这样的商品
+
+
+        /*//1.看是否存在   goodsID这样的商品
         // 如果有   拿到这条数据
         try {
            Goods goods = getGoods(goodsID);
@@ -69,7 +94,7 @@ public class GoodsUpdateServlet extends HttpServlet {
            }
         } catch (SQLException e) {
            e.printStackTrace();
-        }
+        }*/
 
 
 
