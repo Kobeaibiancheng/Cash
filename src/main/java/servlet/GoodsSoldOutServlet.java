@@ -1,5 +1,6 @@
 package servlet;
 
+import service.AccountService;
 import util.DBUtil;
 
 import javax.servlet.ServletException;
@@ -28,7 +29,20 @@ public class GoodsSoldOutServlet extends HttpServlet {
         System.out.println("id " + id);
 
 
-        Connection connection = null;
+        AccountService accountService = new AccountService();
+        try {
+            int ret = accountService.goodsSoldOut(id);
+            if (ret != 0) {
+                System.out.println("下架成功 " + id);
+            }else {
+                System.out.println("下架失败 " + id);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+
+        /*Connection connection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
 
@@ -56,6 +70,6 @@ public class GoodsSoldOutServlet extends HttpServlet {
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-        }
+        }*/
     }
 }
