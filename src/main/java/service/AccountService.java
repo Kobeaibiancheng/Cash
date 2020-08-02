@@ -3,6 +3,7 @@ package service;
 import dao.AccountDao;
 import entity.Account;
 import entity.Goods;
+import entity.Order;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -81,4 +82,39 @@ public class AccountService {
     }
 
 
+    /**
+     * 购买商品
+     * @param buyGoodsList
+     * @return
+     * @throws SQLException
+     */
+    public int buyGoods(List<Goods> buyGoodsList) throws SQLException {
+        AccountDao accountDao = new AccountDao();
+        int ret = accountDao.buyGoods(buyGoodsList);
+        return ret;
+    }
+
+
+    /**
+     *
+     * @param order
+     * @return
+     */
+    public boolean commitOder(Order order) throws SQLException {
+        AccountDao accountDao = new AccountDao();
+        boolean ret = accountDao.commitOder(order);
+        return ret;
+    }
+
+    public boolean updateAfterPay(Goods goods,Integer buyGoodsNum) throws SQLException {
+        AccountDao accountDao = new AccountDao();
+        boolean ret = accountDao.updateAfterPay(goods,buyGoodsNum);
+        return ret;
+    }
+
+    public Goods getGoods(Integer id) throws SQLException {
+        AccountDao accountDao = new AccountDao();
+        Goods goods = accountDao.getGoods(id);
+        return goods;
+    }
 }
