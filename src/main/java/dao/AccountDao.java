@@ -2,6 +2,8 @@ package dao;
 
 import entity.Account;
 import entity.Goods;
+import entity.Order;
+import entity.OrderItem;
 import util.DBUtil;
 
 
@@ -199,13 +201,11 @@ public class AccountDao {
      * @throws SQLException
      */
     public int goodsUpdate(Goods updateGoods) throws SQLException {
-        Connection connection = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
 
         try{
             Goods goods = getGoods(updateGoods.getId());
+            System.out.println(updateGoods.getId());
+            System.out.println(goods);
             if (goods != null) {
 
                 goods.setName(updateGoods.getName());
@@ -221,10 +221,11 @@ public class AccountDao {
                     return 0;
                 }
             }else {
+                System.out.println("没有该商品");
                 return 0;
             }
         }finally {
-            DBUtil.close(connection,ps,rs);
+
         }
     }
 
@@ -268,12 +269,13 @@ public class AccountDao {
      * @return
      * @throws SQLException
      */
-    private Goods getGoods(Integer id) throws SQLException {
+    public Goods getGoods(Integer id) throws SQLException {
         Connection connection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
         Goods goods = null;
         try {
+            System.out.println(id);
             String sql = "select * from goods where id = ?";
             connection = DBUtil.getConnection(true);
             ps = connection.prepareStatement(sql);
@@ -325,7 +327,15 @@ public class AccountDao {
         }
     }
 
-    private boolean updateAfterPay(Goods goods,Integer buyGoodsNum) throws SQLException {
+
+    /**
+     * 更新库存
+     * @param goods
+     * @param buyGoodsNum
+     * @return
+     * @throws SQLException
+     */
+    public boolean updateAfterPay(Goods goods,Integer buyGoodsNum) throws SQLException {
         Connection connection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -348,6 +358,76 @@ public class AccountDao {
         }
     }
 
+
+
+
+    public boolean commitOder(Order order) throws SQLException {
+        Connection connection = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+
+        try {
+            String insertOrderSql = "insert into `order` (id, account_id,create_time, finish_time,actual_amount,total_money,order_status,account_name) " +
+                    "values (?,?,?,?,?,?,?,?)";
+            connection = DBUtil.getConnection(false);
+            ps = connection.prepareStatement(insertOrderSql);
+
+            /*ps.setString(1,order.getId());
+            ps.setInt(2,order.getAccount_id());
+            ps.setInt(3,order.getActual_amountInt());
+            ps.setInt(4,order.getTotal_moneyInt());
+            ps.setInt(5,order.getOrder_status().getFlag());
+            ps.setString(6,order.getAccount_name());*/
+            ps.setString(1,order.getId());
+            ps.setInt(2,order.getAccount_id());
+            ps.setString(3,order.getCreate_time());
+            ps.setString(4,order.getFinish_time());
+            ps.setInt(5,order.getActual_amountInt());
+            ps.setInt(6,order.getTotal_moneyInt());
+            ps.setInt(7,order.getOrder_status().getFlag());
+            ps.setString(8,order.getAccount_name());
+
+            int ret = ps.executeUpdate();
+            if (ret == 0) {
+                throw new RuntimeException("插入订单失败！");
+            }
+
+            String insertOrderItemSql = "insert into order_item(order_id, goods_id, goods_name,goods_introduce, " +
+                    "goods_num, goods_unit, goods_price, goods_discount) values (?,?,?,?,?,?,?,?)";
+            ps = connection.prepareStatement(insertOrderItemSql);
+
+            for (OrderItem orderItem : order.getOrderItemList()) {
+                ps.setString(1,orderItem.getOrder_id());
+                ps.setInt(2,orderItem.getGoods_id());
+                ps.setString(3,orderItem.getGoods_name());
+                ps.setString(4,orderItem.getGoods_introduce());
+                ps.setInt(5,orderItem.getGoods_num());
+                ps.setString(6,orderItem.getGoods_unit());
+                ps.setInt(7,orderItem.getGoods_priceInt());
+                ps.setInt(8,orderItem.getGoods_discount());
+                ps.addBatch();//   缓存
+            }
+
+            int[] effect = ps.executeBatch();//批量插入
+            for (int i : effect) {
+                if (i == 0) {
+                    throw new RuntimeException("插入订单明细失败！");
+                }
+            }
+            //批量插入没有发生任何的异常
+            connection.commit();
+        }catch (Exception e) {
+            e.printStackTrace();
+            //判断链接是否断开
+            if(connection != null) {
+                //回滚
+                // connection.rollback();
+            }
+        }finally {
+            DBUtil.close(connection,ps,rs);
+        }
+        return true;
+    }
     public static void main(String[] args) throws SQLException {
         AccountDao accountDao = new AccountDao();
         Account account = new Account();
