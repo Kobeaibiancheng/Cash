@@ -5,6 +5,7 @@ import entity.Account;
 import entity.Goods;
 import entity.Order;
 import entity.OrderItem;
+import service.AccountService;
 import util.DBUtil;
 
 import javax.servlet.ServletException;
@@ -14,64 +15,75 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.io.Writer;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Created with IntelliJ IDEA.
+ * Description:
+ * User: GAOBO
+ * Date: 2020-05-20
+ * Time: 19:26
+ */
 @WebServlet("/pay")
 public class ReadyBuyServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
-        resp.setContentType("text/html; charset=utf-8");//设置响应体返回  剋是text/html   及编码
+        resp.setContentType("text/html; charset=utf-8");
 
         String goodsIDAndNum = req.getParameter("goodsIDAndNum");
-        //1-8,3-2
+        System.out.println(goodsIDAndNum);
+        //1-8,3-2  --> "," -->  1-8    3-2
+        //因为货物较多，那么货物需要用List进行保存。
+        List<Goods> goodsList = new ArrayList<>();
 
-        //因为买的货物可以是多个   需要将货物Goods保存
-        List<Goods> goodsList = new ArrayList<Goods>();
-
-
-        Writer writer = resp.getWriter();
-
-        String[] strings1 = goodsIDAndNum.split(",");
-        for (String s : strings1) {
-            String[] strings2 = s.split("-");
-            Goods goods = getGoods(Integer.valueOf(strings2[0]));
-            if (goods != null) {
-                if (Integer.valueOf(strings2[1]) > goods.getStock()){
-                    System.out.println("商品数量不足 " + strings2[0]);
-                    writer.write("<h2> 所购商品不足 "+ strings2[1] + "</h2>" + "\n购买失败");
-                    return;
-                }else {
-                    goods.setBuyGoodsNum(Integer.valueOf(strings2[1]));
-                    goodsList.add(goods);
-                }
-            }else {
-                writer.write("<h2>没有该商品" + strings2[0] + "</h2>");
-                System.out.println("没有该商品 " + strings2[0]);
-            }
+        try {
+            //将前端输入得所有商品分割后放到goodList
+            goodsList = splitGoodsIDAndNum(goodsIDAndNum);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        System.out.println("购买商品列表");
+
+        /*String[] strings1 = goodsIDAndNum.split(",");
+        for (String s1 : strings1) {
+            //System.out.println(s1);//1-8  3-2
+            String[] strings2 = s1.split("-");
+            //查找货物是否存在
+            Goods goods = null;
+            try {
+                goods = getGoods(Integer.valueOf(strings2[0]));
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            if(goods != null) {
+                goods.setBuyGoodsNum(Integer.valueOf(strings2[1]));
+                goodsList.add(goods);
+            }
+        }*/
+        System.out.println("购买的商品列表：");
         System.out.println(goodsList);
 
         //创建订单
         Order order = new Order();
-        order.setId(String.valueOf(System.currentTimeMillis()));//订单id时间戳
+        order.setId(String.valueOf(System.currentTimeMillis()));
         HttpSession session = req.getSession();
-        Account account = (Account)session.getAttribute("user");
+        System.out.println(session);
+        Account account = (Account) session.getAttribute("user");
+        System.out.println(account);
         order.setAccount_id(account.getId());
         order.setAccount_name(account.getUsername());
 
-
-        //订单创建时间
         /*DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
         order.setCreate_time(LocalDateTime.now().format(formatter));*/
 
         Date date = new Date();
@@ -84,12 +96,10 @@ public class ReadyBuyServlet extends HttpServlet {
 
         int totalMoney = 0;
         int actualMoney = 0;
-        //遍历goodsList中的所够商品
         for (Goods goods : goodsList) {
-            //每一个商品就是一个订单项
+            //每一个商品实际上就是一个订单项
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder_id(order.getId());
-
             orderItem.setGoods_id(goods.getId());
             orderItem.setGoods_name(goods.getName());
             orderItem.setGoods_introduce(goods.getIntroduce());
@@ -100,25 +110,27 @@ public class ReadyBuyServlet extends HttpServlet {
 
             order.orderItemList.add(orderItem);
 
-            //currentMoney  代表每种商品的钱
-            int currentMoney = goods.getBuyGoodsNum() * goods.getPriceInt();
-            //totalMoney   总共的钱
+            //currentMoney 代表每个商品的钱
+            int currentMoney = goods.getBuyGoodsNum()*goods.getPriceInt();
+            //totalMoney ： 总共的钱
             totalMoney += currentMoney;
-            //每种商品实际的钱
-            actualMoney += currentMoney * goods.getDiscount()/100;
+            //每个商品的实际的钱：currentMoney*goods.getDiscount()/100
+            actualMoney += currentMoney*goods.getDiscount()/100;
         }
+
         order.setTotal_money(totalMoney);
         order.setActual_amount(actualMoney);
         order.setOrder_status(OrderStatus.PLAYING);
 
-        System.out.println("订单表： ");
+        System.out.println("订单表：");
         System.out.println(order);
 
-        HttpSession sessionOrder = req.getSession();
-        session.setAttribute("order",order);
+        HttpSession session2 = req.getSession();
+        session2.setAttribute("order",order);
 
-        HttpSession sessionGoodsList = req.getSession();
-        sessionGoodsList.setAttribute("goodsList",goodsList);
+        HttpSession session3 = req.getSession();
+        session3.setAttribute("goodsList",goodsList);
+
 
 
         //如果是跳转到另一个网页的话，对应的数据不好拿到，所以在这里直接进行打印网页
@@ -126,7 +138,7 @@ public class ReadyBuyServlet extends HttpServlet {
         resp.getWriter().println("<html>");
         resp.getWriter().println("<p>"+"【用户名称】:"+order.getAccount_name()+"</p>");
         resp.getWriter().println("<p>"+"【订单编号】:"+order.getId()+"</p>");
-        resp.getWriter().println("<p>"+"【订单状态】:"+order.getOrder_status().getDesc()+"</p>");
+        resp.getWriter().println("<p>"+"【订单状态】:"+order.getOrder_statusDesc()+"</p>");
         resp.getWriter().println("<p>"+"【创建时间】:"+order.getCreate_time()+"</p>");
 
         resp.getWriter().println("<p>"+"编号  "+"名称   "+"数量  "+"单位  "+"单价（元）   "+"</p>");
@@ -140,30 +152,55 @@ public class ReadyBuyServlet extends HttpServlet {
         resp.getWriter().println("<p>"+"【优惠金额】:"+order.getDiscount() +"</p>");
         resp.getWriter().println("<p>"+"【应支付金额】:"+order.getActual_amount() +"</p>");
         //这个标签<a href = > 只会以get方式请求，所以buyGoodsServlet的 doGet方法
-        resp.getWriter().println("<a href=\"BuyGoodsServlet\">确认</a>");
+        resp.getWriter().println("<a href=\"buyGoodsServlet\">确认</a>");
         //resp.getWriter().println("<form action=\"buyGoodsServlet\" method=\"post\"><button type=\"submit\">确认</button></form>");
         resp.getWriter().println("<a href= \"index.html\">取消</a>");
         resp.getWriter().println("</html>");
+
+
+
+    }
+
+    /*
+        将商品分割开
+     */
+    private List<Goods> splitGoodsIDAndNum(String goodsIDAndNum) throws SQLException {
+        List<Goods> goodsList = new ArrayList<>();
+        String[] someGoods = goodsIDAndNum.split(",");
+        AccountService accountService = new AccountService();
+        for (String goods : someGoods) {
+            //System.out.println(goods);//1-8  3-2
+            String[] goodNumId = goods.split("-");
+            Goods good = accountService.getGoods(Integer.valueOf(goodNumId[0]));
+            if (good != null) {
+                good.setBuyGoodsNum(Integer.valueOf(goodNumId[1]));
+                goodsList.add(good);
+            }else {
+                System.out.println("没有该商品");
+            }
+        }
+        return goodsList;
     }
 
 
+    //判断是否有这个商品
+    /*public Goods getGoods(int goodsId) throws SQLException {
 
-
-
-    public Goods getGoods(int goodsID) {
         Connection connection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
+
         Goods goods = null;
-        try{
+
+        try {
             String sql = "select * from goods where id = ?";
             connection = DBUtil.getConnection(true);
             ps = connection.prepareStatement(sql);
-
-            ps.setInt(1,goodsID);
+            ps.setInt(1,goodsId);
 
             rs = ps.executeQuery();
-            if (rs.next()) {
+
+            if(rs.next()) {
                 goods = new Goods();
                 goods.setId(rs.getInt("id"));
                 goods.setName(rs.getString("name"));
@@ -173,17 +210,11 @@ public class ReadyBuyServlet extends HttpServlet {
                 goods.setPrice(rs.getInt("price"));
                 goods.setDiscount(rs.getInt("discount"));
             }
-
-
         }catch (SQLException e) {
             e.printStackTrace();
         }finally {
-            try {
-                DBUtil.close(connection,ps,rs);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+            DBUtil.close(connection,ps,rs);
         }
         return goods;
-    }
+    }*/
 }
