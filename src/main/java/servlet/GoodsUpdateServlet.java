@@ -54,7 +54,7 @@ public class GoodsUpdateServlet extends HttpServlet {
            int ret = accountService.goodsUpdate(updateGoods);
            if (ret != 0) {
                System.out.println("更新成功 " + updateGoods);
-               resp.sendRedirect("goodsbrowse.html");
+               resp.sendRedirect("index.html");
            }else {
                System.out.println("更新失败 " + updateGoods);
            }
