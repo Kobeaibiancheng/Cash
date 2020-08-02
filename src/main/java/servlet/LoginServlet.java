@@ -37,14 +37,14 @@ public class LoginServlet extends HttpServlet {
         System.out.println(accountLogin);
 
         try {
-            Account account = accountService.login(accountLogin);
-            System.out.println(account);
-            if (account != null) {
+            Account user = accountService.login(accountLogin);
+            System.out.println(user);
+            if (user != null) {
                 //session   保存用户信息 用来后续的功能知道是哪个用户
                 HttpSession session = req.getSession();
-                session.setAttribute("account",account);
+                session.setAttribute("user",user);
                 resp.sendRedirect("index.html");
-                System.out.println("登陆成功: " + account);
+                System.out.println("登陆成功: " + user);
             }else {
                 resp.sendRedirect("login.html");
             }
