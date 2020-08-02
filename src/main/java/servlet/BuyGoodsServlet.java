@@ -1,9 +1,12 @@
 package servlet;
 
 import commen.OrderStatus;
+import dao.AccountDao;
 import entity.Goods;
 import entity.Order;
 import entity.OrderItem;
+import lombok.SneakyThrows;
+import service.AccountService;
 import util.DBUtil;
 
 import javax.servlet.ServletException;
@@ -21,8 +24,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-@WebServlet("/BuyGoodsServlet")
+@WebServlet("/buyGoodsServlet")
 public class BuyGoodsServlet extends HttpServlet {
+    @SneakyThrows
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
@@ -50,12 +54,14 @@ public class BuyGoodsServlet extends HttpServlet {
 
 
         System.out.println(goodsList);
-        boolean flag = commitOder(order);
+        AccountService accountService = new AccountService();
+        boolean flag = accountService.commitOder(order);
+        //boolean flag = commitOder(order);
 
         if (flag) {
             //更新库存
             for ( Goods goods : goodsList) {
-                boolean isUpdate = updateAfterPay(goods,goods.getBuyGoodsNum());
+                boolean isUpdate = accountService.updateAfterPay(goods,goods.getBuyGoodsNum());
                 if(isUpdate) {
                     System.out.println("更新库存成功！");
                 }else {
@@ -70,7 +76,7 @@ public class BuyGoodsServlet extends HttpServlet {
         resp.sendRedirect("buyGoodsSuccess.html");
     }
 
-    private boolean updateAfterPay(Goods goods, Integer buyGoodsNum) {
+    /*private boolean updateAfterPay(Goods goods, Integer buyGoodsNum) {
         Connection connection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -96,9 +102,9 @@ public class BuyGoodsServlet extends HttpServlet {
             }
         }
         return true;
-    }
+    }*/
 
-    private boolean commitOder(Order order) {
+    /*private boolean commitOder(Order order) {
         Connection connection = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -109,12 +115,12 @@ public class BuyGoodsServlet extends HttpServlet {
             connection = DBUtil.getConnection(false);
             ps = connection.prepareStatement(insertOrderSql);
 
-            /*ps.setString(1,order.getId());
+            *//*ps.setString(1,order.getId());
             ps.setInt(2,order.getAccount_id());
             ps.setInt(3,order.getActual_amountInt());
             ps.setInt(4,order.getTotal_moneyInt());
             ps.setInt(5,order.getOrder_status().getFlag());
-            ps.setString(6,order.getAccount_name());*/
+            ps.setString(6,order.getAccount_name());*//*
             ps.setString(1,order.getId());
             ps.setInt(2,order.getAccount_id());
             ps.setString(3,order.getCreate_time());
@@ -172,5 +178,5 @@ public class BuyGoodsServlet extends HttpServlet {
             }
         }
         return true;
-    }
+    }*/
 }
